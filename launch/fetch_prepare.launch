@@ -1,0 +1,29 @@
+<launch>
+  <arg name="debug" default="false" />
+  <arg name="gazebo" default="false" />
+  <arg name="rviz" default="false" />
+
+  <group if="$(arg gazebo)">
+    <include file="$(find fetch_gazebo)/launch/simulation.launch" />
+  </group>
+  <group unless="$(arg gazebo)">
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+       <param name="/use_gui" value="true"/>
+    </node>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+  </group>
+  <include file="$(find fetch_moveit_config)/launch/planning_context.launch" />
+
+  <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 odom_combined base_footprint 100" />
+
+  <include file="$(find fetch_moveit_config)/launch/move_group.launch">
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="fake_execution" value="false"/>
+    <arg name="info" value="true"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+  <include file="$(find fetch_moveit_config)/launch/moveit_rviz.launch" if="$(arg rviz)">
+    <arg name="config" value="true"/>
+  </include>
+</launch>
