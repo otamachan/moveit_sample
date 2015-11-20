@@ -30,10 +30,15 @@
  *********************************************************************/
 
 #include <boost/smart_ptr/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+
+#include <Eigen/Geometry>
+#include <geometric_shapes/shapes.h>
+#include <eigen_stl_containers/eigen_stl_vector_container.h>
 
 // MoveIt!
 #include <moveit/robot_model_loader/robot_model_loader.h>
@@ -79,6 +84,19 @@ namespace ompl_interface
       tip_ = tips[0];
       start_pos_ = start_robot_state.getFrameTransform(tip_);
       std::cerr << start_pos_.translation();
+      const moveit::core::JointModelGroup *jmg = pc->getJointModelGroup();
+      const std::vector<const moveit::core::LinkModel*> links = jmg->getLinkModels();
+      BOOST_FOREACH(const moveit::core::LinkModel* link, links) {
+        std::cerr << link->getName() << std::endl;
+        const std::vector<shapes::ShapeConstPtr> shapes = link->getShapes();
+        const EigenSTL::vector_Affine3d origins = link->getCollisionOriginTransforms();
+        BOOST_FOREACH(shapes::ShapeConstPtr shape, shapes) {
+          shape->print();
+        }
+        BOOST_FOREACH(Eigen::Affine3d origin, origins) {
+          std::cerr << origin.translation() << std::endl;
+        }
+      }
       // JointModelGroupを取得
       // 全てのLinkを取得
       // メッシュ情報を取得(コピーしておく?)
